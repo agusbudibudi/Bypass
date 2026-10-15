@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SFL Bypass — Dorzx</title>
+<meta name="description" content="Lewati link SFL, langsung ke tujuan. Tanpa iklan, tanpa hitung mundur.">
+<style>
+  :root{--bg:#0a0a0a;--panel:#121212;--line:#232323;--fg:#eaeaea;--muted:#8a8a8a;--blue:#8cc8ff}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);
+    font:15px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  body{display:flex;flex-direction:column;align-items:center;padding:40px 20px 32px;gap:28px}
+  main{width:min(760px,100%);display:flex;flex-direction:column;gap:24px}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;
+    border:1px solid var(--line);border-radius:999px;font-size:12px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted);width:fit-content}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+  h1{font-size:clamp(28px,5.2vw,42px);line-height:1.12;font-weight:800;margin:0;letter-spacing:-.02em}
+  h1 .blue{color:var(--blue)}
+  p.lede{color:var(--muted);margin:0;max-width:60ch}
+  .card{padding:20px;background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;display:flex;flex-direction:column;gap:14px}
+  label.field{font-size:13px;color:var(--fg);font-weight:600}
+  form{display:flex;gap:10px;flex-wrap:wrap}
+  input[type=url]{flex:1 1 300px;min-width:0;padding:14px 16px;background:#0e0e0e;
+    border:1px solid var(--line);border-radius:10px;color:inherit;font:inherit;outline:none}
+  input[type=url]:focus{border-color:#3a3a3a;background:#141414}
+  button{flex:0 0 auto;padding:14px 26px;border:0;border-radius:10px;
+    background:var(--blue);color:#0a0a0a;font:inherit;font-weight:700;cursor:pointer;transition:opacity .15s}
+  button:hover{opacity:.88}
+  button:disabled{opacity:.45;cursor:progress}
+  .check{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--fg)}
+  .check input{width:16px;height:16px;accent-color:var(--blue)}
+  .result{margin-top:2px;padding:14px;background:#0e0e0e;border:1px solid var(--line);
+    border-radius:10px;word-break:break-all;display:none}
+  .result.show{display:block}
+  .result a{color:var(--blue);text-decoration:none}
+  .result a:hover{text-decoration:underline}
+  .result .err{color:#ff8a8a}
+  .result .muted{color:var(--muted);font-size:13px;margin-top:6px}
+  .steps{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .step{padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+  .step .n{font-size:12px;color:var(--muted);letter-spacing:.14em;margin-bottom:8px}
+  .step .d{color:var(--muted);font-size:14px}
+  footer{margin-top:8px;text-align:center;font-size:14px;color:var(--muted);
+    display:flex;flex-direction:column;gap:6px}
+  footer b{color:var(--fg)}
+  footer a{color:var(--blue);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<main>
+  <div class="pill"><span class="dot"></span>SFL BYPASS</div>
+  <h1>Lewati link <span class="blue">SFL</span>,<br>langsung ke tujuan.</h1>
+  <p class="lede">Tempel link sfl.gl di bawah. Tanpa iklan, tanpa hitung mundur — langsung dapat link aslinya.</p>
+
+  <div class="card">
+    <label class="field" for="u">Link SFL</label>
+    <form id="f">
+      <input id="u" type="url" placeholder="https://sfl.gl/xxxxxx" required
+        autocomplete="off" spellcheck="false">
+      <button id="go" type="submit">Bypass</button>
+    </form>
+    <label class="check">
+      <input id="autoopen" type="checkbox" checked>
+      Otomatis buka link tujuan
+    </label>
+    <div id="r" class="result"></div>
+  </div>
+
+  <section class="steps">
+    <div class="step"><div class="n">01</div><div class="d">Salin link SFL yang mau dilewati.</div></div>
+    <div class="step"><div class="n">02</div><div class="d">Tempel di kolom lalu tekan Bypass.</div></div>
+    <div class="step"><div class="n">03</div><div class="d">Langsung diarahkan ke link tujuan.</div></div>
+  </section>
+
+  <footer>
+    Author : <b>Dorzx</b>
+    <a href="https://wa.me/62800000000" target="_blank" rel="noopener noreferrer">Saluran WhatsApp</a>
+  </footer>
+</main>
+
+<script>
+  // calls the local netlify function — no cors, no third-party host in the browser.
+  const API = '/api/sfl';
+
+  const form   = document.getElementById('f');
+  const input  = document.getElementById('u');
+  const out    = document.getElementById('r');
+  const btn    = document.getElementById('go');
+  const autoEl = document.getElementById('autoopen');
+
+  function show(html, isErr){
+    out.innerHTML = html;
+    out.classList.add('show');
+    if (isErr && out.firstChild) out.firstChild.className = 'err';
+  }
+
+  async function bypass(link){
+    const r = await fetch(`${API}?url=${encodeURIComponent(link)}`);
+    if (!r.ok) throw new Error(`api ${r.status}`);
+    const data = await r.json();
+    const dest = data?.result?.destinationUrl
+              || data?.result?.url
+              || data?.result?.result
+              || '';
+    if (!dest) throw new Error('link tujuan kosong');
+    return { dest, runtime: data.runtime || null };
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = input.value.trim();
+    if (!url) return;
+
+    btn.disabled = true;
+    show('memproses...');
+
+    try {
+      const { dest, runtime } = await bypass(url);
+      show(
+        `link tujuan: <a href="${dest}" target="_blank" rel="noopener noreferrer">${dest}</a>` +
+        (runtime ? `<div class="muted">runtime: ${runtime}</div>` : '')
+      );
+      if (autoEl.checked) setTimeout(() => { window.location.href = dest; }, 400);
+    } catch (err) {
+      show(
+        `gagal resolve (${err.message}). ` +
+        `<a href="${url}" target="_blank" rel="noopener noreferrer">coba buka manual &rarr;</a>`,
+        true
+      );
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
